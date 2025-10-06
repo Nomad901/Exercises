@@ -27,19 +27,33 @@ public:
         std::mt19937 mt{ radomDevice() };
         std::uniform_int_distribution<uint32_t> genX{ 0, WIN_WIDTH };
         std::uniform_int_distribution<uint32_t> genY{ 0, WIN_HEIGHT };
-
+  
         mWallsPos.reserve(pNumberWalls);
-        for (size_t i = 0; i < pNumberWalls; ++i)
-        {
-            uint32_t xValue1 = genX(mt);
-            uint32_t yValue1 = genY(mt);
-            uint32_t xValue2 = genX(mt);
-            uint32_t yValue2 = genY(mt);
-        
-            std::pair<glm::vec2, glm::vec2> pair;
-            pair = std::make_pair(glm::vec2(xValue1, yValue1), glm::vec2(xValue2, yValue2));
-            mWallsPos.push_back(pair);
-        }
+       //for (size_t i = 0; i < pNumberWalls; ++i)
+       //{
+       //    uint32_t xValue1 = genX(mt);
+       //    uint32_t yValue1 = genY(mt);
+       //    uint32_t xValue2 = genX(mt);
+       //    uint32_t yValue2 = genY(mt);
+       //
+       //    std::pair<glm::vec2, glm::vec2> pair;
+       //    pair = std::make_pair(glm::vec2(xValue1, yValue1), glm::vec2(xValue2, yValue2));
+       //    mWallsPos.push_back(pair);
+       //}
+        float centerX = WIN_WIDTH / 2.0f;
+        float centerY = WIN_HEIGHT / 2.0f;
+        float halfWidth = 1000.0f / 2.0f;
+        float halfHeight = 700.0f / 2.0f;
+
+        float left = centerX - halfWidth;
+        float right = centerX + halfWidth;
+        float top = centerY - halfHeight;
+        float bottom = centerY + halfHeight;
+
+        mWallsPos.push_back(std::make_pair(glm::vec2(left, top), glm::vec2(right, top)));     
+        mWallsPos.push_back(std::make_pair(glm::vec2(right, top), glm::vec2(right, bottom))); 
+        mWallsPos.push_back(std::make_pair(glm::vec2(right, bottom), glm::vec2(left, bottom))); 
+        mWallsPos.push_back(std::make_pair(glm::vec2(left, bottom), glm::vec2(left, top))); 
     }
 
     auto render(SDL_Renderer* pRenderer) -> void
