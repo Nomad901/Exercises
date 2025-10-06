@@ -2,9 +2,6 @@
     MATH ASSIGNMENTS FROM TUTORIALS: https://www.youtube.com/live/fjOdtSu4Lm4?si=qPGbn51_b2DFheQF / Freya Holmér
 */
 
-
-
-
 #include <iostream>
 #include <format>
 #include <unordered_map>
@@ -12,9 +9,12 @@
 #include <expected>
 #include <algorithm>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include "glm/glm.hpp"
+#include "glm/gtx/rotate_vector.hpp"
+
 #include "SDL3_gfxPrimitives.h"
 #include "SDL3/SDL.h"
-#include "glm/glm.hpp"
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_sdlrenderer3.h"
@@ -51,17 +51,18 @@ public:
         std::uniform_int_distribution<uint32_t> genY{ 0, WIN_HEIGHT };
 
         mWallsPos.reserve(pNumberWalls);
-        for (size_t i = 0; i < pNumberWalls; ++i)
-        {
-            uint32_t xValue1 = genX(mt);
-            uint32_t yValue1 = genY(mt);
-            uint32_t xValue2 = genX(mt);
-            uint32_t yValue2 = genY(mt);
-
-            std::pair<glm::vec2, glm::vec2> pair;
-            pair = std::make_pair(glm::vec2(xValue1, yValue1), glm::vec2(xValue2, yValue2));
-            mWallsPos.push_back(pair);
-        }
+       //for (size_t i = 0; i < pNumberWalls; ++i)
+       //{
+       //    uint32_t xValue1 = genX(mt);
+       //    uint32_t yValue1 = genY(mt);
+       //    uint32_t xValue2 = genX(mt);
+       //    uint32_t yValue2 = genY(mt);
+       //
+       //    std::pair<glm::vec2, glm::vec2> pair;
+       //    pair = std::make_pair(glm::vec2(xValue1, yValue1), glm::vec2(xValue2, yValue2));
+       //    mWallsPos.push_back(pair);
+       //}
+        mWallsPos.push_back(std::make_pair(glm::vec2(500.0f, 500.0f), glm::vec2(800.0f, 500.0f)));
     }
 
     auto render(SDL_Renderer* pRenderer) -> void
@@ -107,27 +108,35 @@ public:
         auto points = rayIsCollided();
         if (points.has_value())
         {
-            std::vector<std::pair<float, glm::vec2>> linesLengths;
-            linesLengths.reserve(points.value().size());
-            for (auto& i : points.value())
+            glm::vec2 posPoint = points.value();
+            SDL_RenderLine(pRenderer, mCharPos.x, mCharPos.y, posPoint.x, posPoint.y);
+            for (auto& i : mWalls)
             {
-                linesLengths.push_back(std::make_pair(glm::length(glm::vec2(i - mCharPos)), glm::vec2(i.x, i.y)));
+                auto normals = calculateNormals(i.first, i.second);
+                SDL_RenderLine(pRenderer, posPoint.x, posPoint.y, posPoint.x + normals.second.x * 50.0f, posPoint.y + normals.second.y * 50.0f);
+
+                glm::vec2 normDirection = glm::normalize(posPoint - mCharPos);
+
+                float dotProduct = glm::dot(normDirection, normals.second);
+                float angleRadians = std::acos(dotProduct);
+                float angleDegrees = glm::degrees(angleRadians);
+                std::cout << std::format("Angle degrees: {}\n", angleDegrees);
+
+                glm::vec2 direction = posPoint - mCharPos;
+                std::pair<glm::vec2, glm::vec2> mirrorLine = std::make_pair(glm::vec2(posPoint), glm::vec2(posPoint.x + normals.second.x * glm::length(direction), 
+                                                                                                           posPoint.y + normals.second.y * glm::length(direction)));
+                glm::vec2 finalVector = glm::rotate(mirrorLine.second, angleRadians);
+                SDL_RenderLine(pRenderer, mirrorLine.first.x, mirrorLine.first.y, finalVector.x, finalVector.y);
             }
-            std::sort(linesLengths.begin(), linesLengths.end(), [](const auto& pFirst, const auto& pSecond)
-                {
-                    return pFirst.first < pSecond.first;
-                });
-            SDL_RenderLine(pRenderer, mCharPos.x, mCharPos.y, linesLengths[0].second.x, linesLengths[0].second.y);
         }
     }
     
 private:
-    auto rayIsCollided() -> std::expected<std::vector<glm::vec2>, bool>
+    auto rayIsCollided() -> std::expected<glm::vec2, bool>
     {
-        static float mT = 0.0f;
-        static float mU = 0.0f;
-        std::vector<glm::vec2> tmpVctr;
-        tmpVctr.reserve(mWalls.size());
+        float minDistance = std::numeric_limits<float>::max();
+        glm::vec2 closestPoint;
+        bool foundCollision = false;
 
         for (auto& i : mWalls)
         {
@@ -145,20 +154,34 @@ private:
             if (den == 0)
                 continue;
 
-            mT = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
-            mU = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
-            if (mT > 0 && mT < 1 && mU > 0)
+            float t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den;
+            float u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+            if (t > 0 && t < 1 && u > 0)
             {
-                glm::vec2 pointVctr = glm::vec2(x1 + mT * (x2 - x1),
-                                                y1 + mT * (y2 - y1));
-                tmpVctr.push_back(pointVctr);
+                glm::vec2 pointVctr = glm::vec2(x1 + t * (x2 - x1),
+                                                y1 + t * (y2 - y1));
+                float distance = glm::length(pointVctr - mCharPos);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestPoint = pointVctr;
+                    foundCollision = true;
+                }
             } 
         }
-
-        if (tmpVctr.empty())
+        if (!foundCollision)
             return std::unexpected(false);
 
-        return tmpVctr;
+        return closestPoint;
+    }
+
+    std::pair<glm::vec2, glm::vec2> calculateNormals(glm::vec2 pBeginning, glm::vec2 pEnd)
+    {
+        glm::vec2 direction = pEnd - pBeginning;
+        glm::vec2 normal1 = glm::normalize(glm::vec2(-direction.y, direction.x));
+        glm::vec2 normal2 = glm::normalize(glm::vec2(direction.y, -direction.x));
+
+        return std::make_pair(normal1, normal2);
     }
 
 private:
