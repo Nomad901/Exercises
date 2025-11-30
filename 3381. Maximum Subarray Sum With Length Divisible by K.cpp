@@ -1,5 +1,26 @@
 class Solution {
 public:
+
+/*
+int64_t maxSubarraySum(std::vector<int32_t>& pNumbers, int32_t pPivotNumber)
+{
+	int64_t totalSum = LLONG_MIN;
+	
+	for (size_t i = 0; i < pNumbers.size(); ++i)
+	{
+		int64_t currentSum = 0;
+		for (size_t j = 1; i + j - 1 < pPivotNumber; ++j)
+		{
+			currentSum += pNumbers[i + j - 1];
+			if (j % pPivotNumber == 0)
+				totalSum = std::max(totalSum, currentSum);
+		}
+	}
+	
+	return totalSum;
+}
+*/
+
   auto checkSubarray(const std::vector<int32_t>& pOrigNumbers, const std::vector<int32_t>& pSubarray) -> bool
 {
 	std::vector<int32_t> checkerSubarray;
