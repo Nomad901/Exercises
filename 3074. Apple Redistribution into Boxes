@@ -1,0 +1,21 @@
+class Solution {
+public:
+    int32_t minimumBoxes(const std::vector<int32_t>& pApples, std::vector<int32_t>& pCapacity)
+{
+	std::ranges::sort(pCapacity);
+	std::ranges::reverse(pCapacity);
+
+	uint32_t sumOfApples = std::accumulate(pApples.begin(), pApples.end(), 0);
+	uint32_t totalCapacity = 0;
+	
+	for (uint32_t i = 0; i < pCapacity.size(); ++i)
+	{
+		totalCapacity += pCapacity[i];
+		if (totalCapacity >= sumOfApples)
+			return static_cast<int32_t>(i + 1);
+	}
+
+	return 0;
+}
+
+};
