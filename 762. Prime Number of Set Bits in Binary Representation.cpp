@@ -1,27 +1,29 @@
 class Solution {
 public:
-    int countPrimeSetBits(int left, int right) {
-        int count = 0;
-        
-        for (int i = left; i <= right; i++) {
-            int setBits = __builtin_popcount(i);  // C++ built-in to count set bits
-            if (isPrime(setBits)) {
-                count++;
-            }
-        }
-        return count;
-    }
-    
+int32_t countPrimeSetBits(int32_t pLeft, int32_t pRight)
+{
+	uint32_t result = 0;
+
+	while (pLeft <= pRight)
+	{
+		std::bitset<32> numberInBinary(pLeft);
+		if (isPrime(numberInBinary.count()))
+			result++;
+		pLeft++;
+	}
+
+	return result;
+}
 private:
-    bool isPrime(int n) {
-        if (n <= 1) {
-            return false;
-        }
-        for (int i = 2; i * i <= n; i++) {
-            if (n % i == 0) {
-                return false;
-            }
-        }
-        return true;
-    }
+bool isPrime(int32_t pNumber)
+{
+	if (pNumber <= 1)
+		return false;
+	for (size_t i = 2; i * i <= pNumber; ++i)
+	{
+		if (pNumber % i == 0)
+			return false;
+	}
+	return true;
+}
 };
