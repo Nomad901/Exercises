@@ -1,17 +1,31 @@
 class Solution {
 public:
-    string makeLargestSpecial(string s) {
-        if (s == "") return s;
-        vector<string> ans;
-        int cnt = 0;
-        for (int i = 0, j = 0; i < s.size(); ++i) {
-            cnt += s[i] == '1' ? 1 : -1;
-            if (cnt == 0) {
-                ans.push_back("1" + makeLargestSpecial(s.substr(j + 1, i - j - 1)) + "0");
-                j = i + 1;
-            }
-        }
-        sort(ans.begin(), ans.end(), greater<string>{});
-        return accumulate(ans.begin(), ans.end(), ""s);
-    }
+std::string makeLargestSpecial(std::string pString)
+{
+	int32_t count = 0;
+	int32_t start = 0;
+
+	std::vector<std::string> strings;
+
+	for (int32_t i = 0; i < pString.size(); ++i)
+	{
+		count += (pString[i] == '1') ? +1 : -1;
+
+		if (count == 0)
+		{
+			strings.push_back('1' + makeLargestSpecial(pString.substr(start + 1, i - start - 1)) + '0');
+			start = i + 1;
+		}
+	}
+
+	std::ranges::sort(strings, std::greater<std::string>());
+
+	std::string result;
+	for (auto& i : strings)
+	{
+		result += i;
+	}
+
+	return result;
+}
 };
